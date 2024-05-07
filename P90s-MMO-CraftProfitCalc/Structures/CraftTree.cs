@@ -10,14 +10,14 @@ namespace P90ez.CraftProfitCalc.Structures
     {
         public CraftTreeNode Item = new CraftTreeNode();
 
-        public uint TotalCost { 
+        public double TotalCost { 
             get {
                 if (Item.CraftingCost < Item.BuyCost) return Item.CraftingCost;
                 else return Item.BuyCost; 
             } 
         }
 
-        public uint Margin { get { return Item.BuyCost - TotalCost; } }
+        public double Margin { get { return Item.BuyCost - TotalCost; } }
 
         public bool IsBuyingCheaper { get { return Item.CraftingCost < Item.BuyCost; } }
 
