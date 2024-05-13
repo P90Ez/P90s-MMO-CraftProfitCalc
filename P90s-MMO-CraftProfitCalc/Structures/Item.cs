@@ -1,10 +1,11 @@
-﻿namespace P90ez.CraftProfitCalc
+﻿namespace P90ez.CraftProfitCalc.Structures
 {
-    public class Item
+    public class Item : IItem
     {
-        public Item() { }
         public Item(string Name) { this.Name = Name; }
-        public string Name { get; set; } = String.Empty;
+
+        public string Name { get; }
+
 
         //--- overrides ---
         public override string ToString()

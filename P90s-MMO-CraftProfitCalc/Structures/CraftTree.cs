@@ -8,7 +8,9 @@ namespace P90ez.CraftProfitCalc.Structures
 {
     public class CraftTree
     {
-        public CraftTreeNode Item = new CraftTreeNode();
+        public CraftTree(CraftTreeNode Node) { Item = Node; }
+
+        public CraftTreeNode Item { get; }
 
         public double TotalCost { 
             get {
@@ -17,15 +19,15 @@ namespace P90ez.CraftProfitCalc.Structures
             } 
         }
 
-        public double Margin { get { return Item.BuyCost - TotalCost; } }
+        public double TotalMargin { get { return Item.BuyCost - TotalCost; } }
 
-        public bool IsBuyingCheaper { get { return Item.CraftingCost < Item.BuyCost; } }
+        public bool IsBuyingCheaper { get { return Item.BuyCost < Item.CraftingCost || !Item.IsCraftable; } }
 
 
         //--- Conversions ---
         public static implicit operator CraftTree(CraftTreeNode Node)
         {
-            return new CraftTree() { Item = Node };
+            return new CraftTree(Node);
         }
     }
 }

@@ -25,100 +25,77 @@ namespace P90ez.CraftProfitCalc.Structures
         /// <returns>Returns a tree containing all crafting steps or null if given item is not craftabe and buyable</returns>
         public CraftTree? Craft(ItemStack Stack)
         {
-            CraftTreeNode StartNode = new CraftTreeNode(Stack);
+            CraftTreeNode StartNode = new CraftTreeNode(Stack.Name, 0, 0, Stack.Amount);
 
             CraftRecursive(ref StartNode);
 
             return StartNode;
         }
 
-        //--- Functions needed for calculation
+        //--- Functions needed for calculation ---
 
         /// <summary>
         /// Generates the crafting tree using the node recursive.
         /// </summary>
         private void CraftRecursive(ref CraftTreeNode CurrentNode)
         {
-            if (IsItemBuyable(CurrentNode))
+            //fetch price if buyable
+            CurrentNode = new CraftTreeNode(new TradeItem(GetBuyableItem(CurrentNode)), CurrentNode.Amount);
+
+            //determine valid crafting recipes for given item
+            var UseableRecipes = GetUseableRecipes(CurrentNode);
+            if (UseableRecipes.Count() == 0) return;
+
+            bool FirstCraftingPathSet = false;
+            foreach (Recipe Recipe in UseableRecipes) //calculate for each possibile path
             {
-                CurrentNode.BuyCost = GetBuycost(CurrentNode);
-                CurrentNode.IsBuyable = true;
-            }
+                List<CraftTreeNode> CraftInputItems = new List<CraftTreeNode>();
+                double CraftingCostPerItem = 0;
 
-            var Item = new Item(CurrentNode.Name);
-            var UseableRecipes = Recipes.Where(Recipe => Recipe.Output.Contains(Item));
-
-            if(UseableRecipes == null || UseableRecipes.Count() == 0) return;
-            CurrentNode.IsCraftable = true;
-
-            List<CraftTreeNode> CraftingPaths = new List<CraftTreeNode>();
-            foreach(Recipe Recipe in UseableRecipes) //calculate for each possibile path
-            {
-                CraftTreeNode TmpNode = CurrentNode;
-                TmpNode.InputItems = new List<CraftTreeNode>();
-
-                double TotalCraftingCost = 0;
-
-                foreach(ItemStack RequiredItem in Recipe.Input) //calc each required item and add it to input
+                foreach (ItemStack RequiredItem in Recipe.Input) //calc each required item and add it to input
                 {
-                    CraftTreeNode SubNode = new CraftTreeNode(RequiredItem);
-                    SubNode.Amount *= CurrentNode.Amount; //multiply with required amount of current item to get total amount of sub items required for crafting
+                    uint SubAmout = RequiredItem.Amount * CurrentNode.Amount; //multiply with required amount of current item to get total amount of sub items required for crafting
 
+                    CraftTreeNode SubNode = new CraftTreeNode(RequiredItem.Name, 0, 0, SubAmout);
                     CraftRecursive(ref SubNode);
-
-                    if(SubNode.BuyCost < SubNode.CraftingCost) //remove subnodes when buying is cheaper than crafting
-                    {
-                        SubNode.InputItems.Clear();
-                    }
 
                     if (SubNode.IsCraftable) //sum up costs
                     {
-                        TotalCraftingCost += (SubNode.TotalCraftingCost < SubNode.TotalBuyCost ? SubNode.TotalCraftingCost : SubNode.TotalBuyCost); 
+                        CraftingCostPerItem += (SubNode.CraftingCost < SubNode.BuyCost ? SubNode.CraftingCost : SubNode.BuyCost) * RequiredItem.Amount;
                     }
                     else
                     {
-                        TotalCraftingCost += SubNode.TotalBuyCost;
+                        CraftingCostPerItem += SubNode.BuyCost * RequiredItem.Amount;
                     }
 
-                    TmpNode.CraftingCost = TotalCraftingCost / TmpNode.Amount; //set the crafting cost for a single unit
-
-                    TmpNode.InputItems.Add(SubNode);
+                    CraftInputItems.Add(SubNode);
                 }
 
-                CraftingPaths.Add(TmpNode); //store path
-            }
-
-            bool FirstSet = false;
-            foreach(CraftTreeNode Path in CraftingPaths) //get best path
-            {
-                if (!FirstSet)
+                //replace current node if this path is the cheapest to craft (or the first path)
+                if ((CurrentNode.BuyCost >= CraftingCostPerItem || !CurrentNode.IsBuyable) && (CurrentNode.CraftingCost > CraftingCostPerItem || !FirstCraftingPathSet))
                 {
-                    CurrentNode = Path;
-                    FirstSet = true;
-                }
-                else if (Path.CraftingCost < CurrentNode.CraftingCost)
+                    FirstCraftingPathSet = true;
+                    CurrentNode = new CraftTreeNode(CurrentNode.Name, CurrentNode.BuyCost, CraftingCostPerItem, CurrentNode.Amount) { InputItems = CraftInputItems };
+                } 
+                else if (!FirstCraftingPathSet)
                 {
-                    CurrentNode = Path;
+                    FirstCraftingPathSet = true; 
+                    CurrentNode = new CraftTreeNode(CurrentNode.Name, CurrentNode.BuyCost, CraftingCostPerItem, CurrentNode.Amount); //don't store InputItems because buying is cheaper.
                 }
             }
         }
 
-        private bool IsItemBuyable(Item Item)
-        {
-            return BuyableItems.Contains(Item);
-        }
-
-        private bool IsItemCraftable(Item Item)
-        {
-            return Recipes.Where(Recipe => Recipe.Output.Contains(Item)).Any();
-        }
-
-        private double GetBuycost(Item Item)
+        private BuyableItem GetBuyableItem(Item Item)
         {
             var Items = BuyableItems.Where(Buyables => Buyables.Name == Item.Name);
 
-            if(Items == null || Items.Count() == 0) return -1;
-            return Items.First().Price;
+            if(Items == null || Items.Count() == 0) return new BuyableItem(Item.Name, 0); //-> item not buyable
+            return Items.First();
+        }
+
+        private IEnumerable<Recipe> GetUseableRecipes(Item ItemToCraft)
+        {
+            return Recipes.Where(Recipe => Recipe.Output.Contains(ItemToCraft));
         }
 
     }
