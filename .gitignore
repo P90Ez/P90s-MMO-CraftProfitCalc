@@ -6,6 +6,9 @@
 # Test Environment
 Test*Environment/
 
+# DrawIO backup files
+.$*
+
 # User-specific files
 *.rsuser
 *.suo
