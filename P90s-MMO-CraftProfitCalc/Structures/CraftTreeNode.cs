@@ -8,7 +8,7 @@ namespace P90ez.CraftProfitCalc.Structures
 {
     public class CraftTreeNode : TradeItemStack
     {
-        public CraftTreeNode(string Name, double BuyCost, double CraftingCost, uint Amount) : base(Name, BuyCost, CraftingCost, Amount) { }
+        public CraftTreeNode(string Name, double BuyCost, double CraftingCost, uint Amount, Recipe? Recipe = null) : base(Name, BuyCost, CraftingCost, Amount, Recipe) { }
         
         public CraftTreeNode(TradeItemStack Stack) : base(Stack, Stack.Amount) { }
 

@@ -8,8 +8,8 @@ namespace P90ez.CraftProfitCalc.Structures
 {
     public class TradeItemStack : TradeItem, IItemStack
     {
-        public TradeItemStack(string Name, double BuyCost, double CraftingCost, uint Amount) : base(Name, BuyCost, CraftingCost) { this.Amount = Amount; }
-        public TradeItemStack(TradeItem BaseItem, uint Amount) : base(BaseItem.Name, BaseItem.BuyCost, BaseItem.CraftingCost) { this.Amount = Amount; }
+        public TradeItemStack(string Name, double BuyCost, double CraftingCost, uint Amount, Recipe? Recipe = null) : base(Name, BuyCost, CraftingCost, Recipe) { this.Amount = Amount; }
+        public TradeItemStack(TradeItem BaseItem, uint Amount) : base(BaseItem.Name, BaseItem.BuyCost, BaseItem.CraftingCost, BaseItem.RecipeUsed) { this.Amount = Amount; }
 
         public uint Amount { get; set; }
 
